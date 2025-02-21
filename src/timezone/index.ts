@@ -1,8 +1,7 @@
 import { captureError } from '../errors'
 import { lieProps } from '../lies'
 import { hashMini } from '../utils/crypto'
-import { createTimer, logTestResult, performanceLogger, hashSlice, LowerEntropy } from '../utils/helpers'
-import { HTMLNote } from '../utils/html'
+import { createTimer, logTestResult } from '../utils/helpers'
 
 export default function getTimezone() {
 	// inspired by https://arkenfox.github.io/TZP
@@ -571,38 +570,4 @@ export default function getTimezone() {
 		captureError(error)
 		return
 	}
-}
-
-export function timezoneHTML(fp) {
-	if (!fp.timezone) {
-		return `
-		<div class="col-six undefined">
-			<strong>Timezone</strong>
-			<div class="block-text">${HTMLNote.BLOCKED}</div>
-		</div>`
-	}
-	const {
-		timezone: {
-			$hash,
-			zone,
-			location,
-			locationMeasured,
-			locationEpoch,
-			offset,
-			offsetComputed,
-			lied,
-		},
-	} = fp
-	return `
-	<div class="relative col-six${lied ? ' rejected' : ''}">
-		<span class="aside-note">${performanceLogger.getLog().timezone}</span>
-		<strong>Timezone</strong><span class="${lied ? 'lies ' : LowerEntropy.TIME_ZONE ? 'bold-fail ' : ''}hash">${hashSlice($hash)}</span>
-		<div class="block-text help"  title="Date\nDate.getTimezoneOffset\nIntl.DateTimeFormat">
-			${zone ? zone : ''}
-			<br>${location != locationMeasured ? locationMeasured : location}
-			<br>${locationEpoch}
-			<br>${offset != offsetComputed ? offsetComputed : offset}
-		</div>
-	</div>
-	`
 }

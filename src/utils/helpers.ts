@@ -26,7 +26,6 @@ const JS_ENGINE = ({
 const LIKE_BRAVE = IS_BLINK && 'flat' in Array.prototype /* Chrome 69 */ && !('ReportingObserver' in self /* Brave */)
 
 // @ts-expect-error
-const LIKE_BRAVE_RESISTANCE = LIKE_BRAVE && navigator?.keyboard === null
 
 function braveBrowser() {
 	const brave = (
@@ -396,63 +395,12 @@ const computeWindowsRelease = ({ platform, platformVersion, fontPlatformVersion 
 }
 
 // attempt windows 11 userAgent
-const attemptWindows11UserAgent = ({ userAgent, userAgentData, fontPlatformVersion }) => {
-	const { platformVersion, platform } = userAgentData || {}
-	// @ts-ignore
-	const windowsRelease = computeWindowsRelease({ platform, platformVersion })
-	return (
-		/Windows 11/.test(''+windowsRelease) || /Windows 11/.test(fontPlatformVersion) ?
-		(''+userAgent).replace('Windows NT 10.0', 'Windows 11') :
-			userAgent
-	)
-}
 
 // attempt restore from User-Agent Reduction
 const isUAPostReduction = (userAgent) => {
 	const matcher = /Mozilla\/5\.0 \((Macintosh; Intel Mac OS X 10_15_7|Windows NT 10\.0; Win64; x64|(X11; (CrOS|Linux) x86_64)|(Linux; Android 10(; K|)))\) AppleWebKit\/537\.36 \(KHTML, like Gecko\) Chrome\/\d+\.0\.0\.0( Mobile|) Safari\/537\.36/
 	const unifiedPlatform = (matcher.exec(userAgent)||[])[1]
 	return IS_BLINK && !!unifiedPlatform
-}
-
-const getUserAgentRestored = ({ userAgent, userAgentData, fontPlatformVersion }) => {
-	if (!userAgentData/* || !isUAPostReduction(userAgent)*/) {
-		return
-	}
-	const { brands, uaFullVersion, platformVersion, model: deviceModel, bitness } = userAgentData
-
-	const isGoogleChrome = (
-		/X11; CrOS/.test(userAgent) ||
-		!!(brands || []).find((x) => x == 'Google Chrome')
-	)
-	const versionNumber = +(/(\d+)\./.exec(platformVersion)||[])[1]
-	const windowsFontVersion = (/8\.1|8|7/.exec(fontPlatformVersion) || [])[0]
-	const windowsVersion = (
-		versionNumber >= 13 ? '11' :
-		versionNumber == 0 ? (windowsFontVersion || '7/8/8.1') : '10'
-	)
-	const windowsVersionMap = {
-		'7': 'NT 6.1',
-		'8': 'NT 6.2',
-		'8.1': 'NT 6.3',
-		'10': 'NT 10.0',
-	}
-	const macVersion = platformVersion.replace(/\./g, '_')
-	const userAgentRestored = userAgent
-		.replace(/(Chrome\/)([^\s]+)/, (match, p1, p2) => `${p1}${isGoogleChrome ? uaFullVersion : p2}`)
-		.replace(/Windows NT 10.0/, `Windows ${windowsVersionMap[windowsVersion] || windowsVersion}`)
-		.replace(/(X11; CrOS x86_64)/, (match, p1) => `${p1} ${platformVersion}`)
-		.replace(/(Linux; Android )(10)(; K|)/, (match, p1, p2, p3) => {
-			return `${p1}${versionNumber}${
-				!p3 ? '' : deviceModel ? `; ${deviceModel}` : '; K'
-			}`
-		})
-		.replace(/(Macintosh; Intel Mac OS X )(10_15_7)/, (match, p1) => {
-			const isOSX = /^10/.test(macVersion)
-			return `${isOSX ? p1 : p1.replace('X ', '')}${macVersion}`
-		})
-		.replace(/(; Win64; x64| x86_64)/, (match, p1) => bitness === '64' ? p1 : '')
-
-	return userAgentRestored
 }
 
 const createPerformanceLogger = () => {
@@ -478,20 +426,6 @@ const createPerformanceLogger = () => {
 }
 const performanceLogger = createPerformanceLogger()
 const { logTestResult } = performanceLogger
-
-const getPromiseRaceFulfilled = async ({
-	promise,
-	responseType,
-	limit = 1000,
-}) => {
-	const slowPromise = new Promise((resolve) => setTimeout(resolve, limit))
-	const response = await Promise.race([slowPromise, promise])
-		.then((response) => response instanceof responseType ? response : 'pending')
-		.catch((error) => 'rejected')
-	return (
-		response == 'rejected' || response == 'pending' ? undefined : response
-	)
-}
 
 const createTimer = () => {
 	let start = 0
@@ -622,4 +556,4 @@ const LowerEntropy: Record<string, boolean> = {
 	WEBGL: false,
 }
 
-export { IS_BLINK, IS_GECKO, IS_WEBKIT, JS_ENGINE, LIKE_BRAVE, LIKE_BRAVE_RESISTANCE, ENGINE_IDENTIFIER, braveBrowser, getBraveMode, getBraveUnprotectedParameters, getOS, getReportedPlatform, USER_AGENT_OS, PLATFORM_OS, decryptUserAgent, getUserAgentPlatform, computeWindowsRelease, attemptWindows11UserAgent, isUAPostReduction, getUserAgentRestored, logTestResult, performanceLogger, getPromiseRaceFulfilled, queueEvent, queueTask, createTimer, formatEmojiSet, EMOJIS, CSS_FONT_FAMILY, hashSlice, Analysis, LowerEntropy, getGpuBrand }
+export { IS_BLINK, IS_GECKO, IS_WEBKIT, JS_ENGINE, LIKE_BRAVE, braveBrowser, getBraveMode, getBraveUnprotectedParameters, getOS, getReportedPlatform, USER_AGENT_OS, PLATFORM_OS, decryptUserAgent, getUserAgentPlatform, computeWindowsRelease, isUAPostReduction, logTestResult, performanceLogger, queueEvent, queueTask, createTimer, formatEmojiSet, EMOJIS, CSS_FONT_FAMILY, hashSlice, Analysis, LowerEntropy, getGpuBrand };

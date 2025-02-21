@@ -7,11 +7,11 @@ app.use(express.static(home))
 
 // redirect /tests/ to /docs/tests
 app.use('*', (req, res, next) => {
-	const testRoute = /^\/tests\//i.test(req.originalUrl)
-	if (testRoute) {
-		const url = `/docs${req.originalUrl}`
-		return res.redirect(url)
-	}
+	// const testRoute = /^\/tests\//i.test(req.originalUrl)
+	// if (testRoute) {
+	// 	const url = `/docs${req.originalUrl}`
+	// 	return res.redirect(url)
+	// }
 	return next()
 })
 app.use('/docs', express.static(__dirname + '/docs'))

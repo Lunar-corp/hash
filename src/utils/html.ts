@@ -1,4 +1,3 @@
-
 // template views
 function patch(oldEl: HTMLElement | null, newEl: DocumentFragment, fn?: () => any) {
 	if (!oldEl) return null
@@ -20,7 +19,6 @@ const HTMLNote = {
 	SECRET: '<span class="blocked">secret</span>',
 }
 
-const pluralify = (len) => len > 1 ? 's' : ''
 const count = (arr) => arr && arr.constructor.name === 'Array' ? '' + (arr.length) : '0'
 
 const getDiffs = ({ stringA, stringB, charDiff = false, decorate = (diff) => `[${diff}]` }) => {
@@ -67,4 +65,4 @@ const modal = (name, result, linkname = 'details') => {
 	`
 }
 
-export { patch, html, HTMLNote, pluralify, getDiffs, count, modal }
+export { patch, html, HTMLNote, getDiffs, count, modal };

@@ -1,9 +1,7 @@
 import { captureError } from '../errors'
 import { PHANTOM_DARKNESS, documentLie } from '../lies'
 import { sendToTrash } from '../trash'
-import { hashMini } from '../utils/crypto'
-import { IS_BLINK, IS_GECKO, createTimer, queueEvent, logTestResult, performanceLogger, Analysis } from '../utils/helpers'
-import { HTMLNote, modal } from '../utils/html'
+import { IS_BLINK, IS_GECKO, createTimer, queueEvent, logTestResult } from '../utils/helpers'
 
 /*
 Steps to update:
@@ -28,17 +26,6 @@ const getStableFeatures = () => ({
 })
 
 // @ts-ignore
-const getListDiff = ({oldList, newList, removeCamelCase = false} = {}) => {
-	const oldSet = new Set(oldList)
-	const newSet = new Set(newList)
-	newList.forEach((x) => oldSet.delete(x))
-	oldList.forEach((x) => newSet.delete(x))
-	const camelCase = /[a-z][A-Z]/
-	return {
-		removed: !removeCamelCase ? [...oldSet] : [...oldSet].filter((key) => !camelCase.test(key)),
-		added: !removeCamelCase ? [...newSet] : [...newSet].filter((key) => !camelCase.test(key)),
-	}
-}
 
 const BROWSER = (
 	IS_BLINK ? 'Chrome' : IS_GECKO ? 'Firefox' : ''
@@ -297,25 +284,6 @@ const getVersionLie = (vReport, version, forgivenessOffset = 0) => {
 }
 
 // feature firewall
-export function getFeaturesLie(fp) {
-	if (!fp.workerScope || !fp.workerScope.userAgent) {
-		return false
-	}
-
-	const { userAgentVersion: reportedVersion } = fp.workerScope
-
-	// let RFP pass
-	const { privacy } = fp.resistance || {}
-	if (privacy == 'Firefox' || privacy == 'Tor Browser') {
-		return false
-	}
-
-	const { cssVersion, jsVersion } = fp.features || {}
-	const { liedVersion: liedCSS } = getVersionLie(reportedVersion, cssVersion)
-	const { liedVersion: liedJS } = getVersionLie(reportedVersion, jsVersion)
-	const liedVersion = liedCSS || liedJS
-	return liedVersion
-}
 
 export default async function getEngineFeatures({
 	cssComputed,
@@ -496,210 +464,4 @@ export default async function getEngineFeatures({
 		captureError(error)
 		return
 	}
-}
-
-export function featuresHTML(fp) {
-	if (!fp.features) {
-		return `
-		<div class="col-six undefined">
-			<div>Features: ${HTMLNote.UNKNOWN}</div>
-			<div>JS/DOM: ${HTMLNote.UNKNOWN}</div>
-		</div>
-		<div class="col-six undefined">
-			<div>CSS: ${HTMLNote.UNKNOWN}</div>
-			<div>Window: ${HTMLNote.UNKNOWN}</div>
-		</div>`
-	}
-
-	const {
-		versionRange,
-		version,
-		cssVersion,
-		jsVersion,
-		windowVersion,
-		cssFeatures,
-		windowFeatures,
-		jsFeatures,
-		jsFeaturesKeys,
-	} = fp.features || {}
-
-	const { keys: windowFeaturesKeys } = fp.windowFeatures || {}
-	const { keys: computedStyleKeys } = fp.css.computedStyle || {}
-	const { userAgentVersion } = fp.workerScope || {}
-	const {
-		css: engineMapCSS,
-		win: engineMapWindow,
-		js: engineMapJS,
-	} = getEngineMaps(BROWSER)
-
-
-	// logger
-	const shouldLogFeatures = (browser, version, userAgentVersion) => {
-		const shouldLog = userAgentVersion > version
-		return shouldLog
-	}
-	const log = ({ features, name, diff }) => {
-		console.groupCollapsed(`%c ${name} Features %c-${diff.removed.length} %c+${diff.added.length}`, 'color: #4cc1f9', 'color: Salmon', 'color: MediumAquaMarine')
-		Object.keys(diff).forEach((key) => {
-			console.log(`%c${key}:`, `color: ${key == 'added' ? 'MediumAquaMarine' : 'Salmon' }`)
-			return console.log(diff[key].join('\n'))
-		})
-		console.log(features.join(', '))
-		return console.groupEnd()
-	}
-	// modal
-	const report = { computedStyleKeys, windowFeaturesKeys, jsFeaturesKeys }
-	const getModal = ({id, engineMap, features, browser, report, userAgentVersion }) => {
-		// capture diffs from stable release
-		const stable = getStableFeatures()
-		const { windowKeys, cssKeys, jsKeys, version } = stable[browser] || {}
-		const logger = shouldLogFeatures(browser, version, userAgentVersion)
-		let diff: {
-				removed: string[]
-				added: string[]
-		} | null = null
-
-		if (id == 'css') {
-			const { computedStyleKeys } = report
-
-			if (cssKeys) {
-				diff = getListDiff({
-					oldList: cssKeys.split(', '),
-					newList: computedStyleKeys,
-					removeCamelCase: true,
-				})
-			}
-
-			if (logger) {
-				console.log(`computing ${browser} ${userAgentVersion} diffs from ${browser} ${version}...`)
-
-				Analysis.featuresCSS = diff
-				log({ features: computedStyleKeys, name: 'CSS', diff })
-			}
-		} else if (id == 'window') {
-			const { windowFeaturesKeys } = report
-
-			if (windowKeys) {
-				diff = getListDiff({
-					oldList: windowKeys.split(', '),
-					newList: windowFeaturesKeys,
-				})
-			}
-
-			if (logger) {
-				Analysis.featuresWindow = diff
-				log({ features: windowFeaturesKeys, name: 'Window', diff })
-			}
-		} else if (id == 'js') {
-			const { jsFeaturesKeys } = report
-
-			if (jsKeys) {
-				diff = getListDiff({
-					oldList: jsKeys.split(', '),
-					newList: jsFeaturesKeys,
-				})
-			}
-
-			if (logger) {
-				Analysis.featuresJS = diff
-				log({ features: jsFeaturesKeys, name: 'JS', diff })
-			}
-		}
-
-		const header = !version || !diff || (!diff.added.length && !diff.removed.length) ? '' : `
-			<strong>diffs from ${version}</strong>:
-			<div>
-			${
-				diff && diff.added.length ?
-					diff.added.map((key) => `<div><span>${key}</span></div>`).join('') : ''
-			}
-			${
-				diff && diff.removed.length ?
-					diff.removed.map((key) => `<div><span class="unsupport">${key}</span></div>`).join('') : ''
-			}
-			</div>
-
-		`
-
-		return modal(`creep-features-${id}`, header + versionSort(Object.keys(engineMap)).map((key) => {
-			return `
-				<strong>${key}</strong>:<br>${
-					engineMap[key].map((prop) => {
-						return `<span class="${!features.has(prop) ? 'unsupport' : ''}">${prop}</span>`
-					}).join('<br>')
-				}
-			`
-		}).join('<br>'), hashMini([...features]))
-	}
-
-	Analysis.featuresVersion = +userAgentVersion || 0
-
-	const cssModal = getModal({
-		id: 'css',
-		engineMap: engineMapCSS,
-		features: new Set(cssFeatures),
-		browser: BROWSER,
-		report,
-		userAgentVersion,
-	})
-
-	const windowModal = getModal({
-		id: 'window',
-		engineMap: engineMapWindow,
-		features: new Set(windowFeatures),
-		browser: BROWSER,
-		report,
-		userAgentVersion,
-	})
-
-	const jsModal = getModal({
-		id: 'js',
-		engineMap: engineMapJS,
-		features: new Set(jsFeatures),
-		browser: BROWSER,
-		report,
-		userAgentVersion,
-	})
-
-	const getIcon = (name) => `<span class="icon ${name}"></span>`
-	const browserIcon = (
-		!BROWSER ? '' :
-			/chrome/i.test(BROWSER) ? getIcon('chrome') :
-				/firefox/i.test(BROWSER) ? getIcon('firefox') :
-					''
-	)
-
-	return `
-	<style>
-		.unsupport {
-			background: #f1f1f1;
-			color: #aaa;
-		}
-		.features-removed {
-			background: red;
-			color: #fff;
-		}
-		.features-added {
-			background: green;
-			color: #fff;
-		}
-		@media (prefers-color-scheme: dark) {
-			.unsupport {
-				color: var(--light-grey);
-				background: none;
-			}
-		}
-	</style>
-	<span class="time">${performanceLogger.getLog().features}</span>
-	<div class="col-six">
-		<div>Features: ${
-			versionRange.length ? `${browserIcon}${version}+` : HTMLNote.UNKNOWN
-		}</div>
-		<div>JS/DOM: ${jsVersion ? `${jsModal} (v${jsVersion})` : HTMLNote.UNKNOWN}</div>
-	</div>
-	<div class="col-six">
-		<div>CSS: ${cssVersion ? `${cssModal} (v${cssVersion})` : HTMLNote.UNKNOWN}</div>
-		<div>Window: ${windowVersion ? `${windowModal} (v${windowVersion})` : HTMLNote.UNKNOWN}</div>
-	</div>
-	`
 }

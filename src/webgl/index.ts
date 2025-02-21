@@ -2,8 +2,7 @@ import { attempt, captureError } from '../errors'
 import { lieProps, PHANTOM_DARKNESS } from '../lies'
 import { sendToTrash, getWebGLRendererConfidence, compressWebGLRenderer } from '../trash'
 import { hashMini } from '../utils/crypto'
-import { IS_WEBKIT, createTimer, queueEvent, LIKE_BRAVE, logTestResult, performanceLogger, hashSlice, LowerEntropy, getGpuBrand, Analysis } from '../utils/helpers'
-import { HTMLNote, count, modal } from '../utils/html'
+import { IS_WEBKIT, createTimer, queueEvent, LIKE_BRAVE, logTestResult, LowerEntropy, getGpuBrand, Analysis } from '../utils/helpers'
 
 export default async function getCanvasWebgl() {
 	// use short list to improve performance
@@ -491,88 +490,4 @@ export default async function getCanvasWebgl() {
 		captureError(error)
 		return
 	}
-}
-
-export function webglHTML(fp) {
-	if (!fp.canvasWebgl) {
-		return `
-		<div class="col-six undefined">
-			<strong>WebGL</strong>
-			<div>images: ${HTMLNote.BLOCKED}</div>
-			<div>pixels: ${HTMLNote.BLOCKED}</div>
-			<div>params (0): ${HTMLNote.BLOCKED}</div>
-			<div>exts (0): ${HTMLNote.BLOCKED}</div>
-			<div>gpu:</div>
-			<div class="block-text">${HTMLNote.BLOCKED}</div>
-			<div class="gl-image"></div>
-		</div>`
-	}
-	const { canvasWebgl: data } = fp
-	const id = 'creep-canvas-webgl'
-
-	const {
-		$hash,
-		dataURI,
-		dataURI2,
-		pixels,
-		pixels2,
-		lied,
-		extensions,
-		parameters,
-		gpu,
-	} = data || {}
-
-	const {
-		parts,
-		warnings,
-		gibbers,
-		confidence,
-		grade: confidenceGrade,
-		compressedGPU,
-	} = gpu || {}
-
-	const paramKeys = parameters ? Object.keys(parameters).sort() : []
-
-	return `
-
-	<div class="relative col-six${lied ? ' rejected' : ''}">
-		<span class="time">${performanceLogger.getLog().webgl}</span>
-		<strong>WebGL</strong><span class="${lied ? 'lies ' : (LowerEntropy.CANVAS || LowerEntropy.WEBGL) ? 'bold-fail ' : ''}hash">${hashSlice($hash)}</span>
-		<div>images:${
-			!dataURI ? ' '+HTMLNote.BLOCKED : `<span class="sub-hash">${hashMini(dataURI)}</span>${!dataURI2 || dataURI == dataURI2 ? '' : `<span class="sub-hash">${hashMini(dataURI2)}</span>`}`
-		}</div>
-		<div>pixels:${
-			!pixels ? ' '+HTMLNote.BLOCKED: `<span class="sub-hash">${hashSlice(pixels)}</span>${!pixels2 || pixels == pixels2 ? '' : `<span class="sub-hash">${hashSlice(pixels2)}</span>`}`
-		}</div>
-		<div>params (${count(paramKeys)}): ${
-			!paramKeys.length ? HTMLNote.BLOCKED :
-			modal(
-				`${id}-parameters`,
-				paramKeys.map((key) => `${key}: ${parameters[key]}`).join('<br>'),
-				hashMini(parameters),
-			)
-		}</div>
-		<div>exts (${count(extensions)}): ${
-			!extensions.length ? HTMLNote.BLOCKED :
-			modal(
-				`${id}-extensions`,
-				extensions.sort().join('<br>'),
-				hashMini(extensions),
-			)
-		}</div>
-
-		<div class="relative">gpu:${
-			confidence ? `<span class="confidence-note">confidence: <span class="scale-up grade-${confidenceGrade}">${confidence}</span></span>` : ''
-		}</div>
-		<div class="block-text help" title="${
-			confidence ? `\nWebGLRenderingContext.getParameter()\ngpu compressed: ${compressedGPU}\nknown parts: ${parts || 'none'}\ngibberish: ${gibbers || 'none'}\nwarnings: ${warnings.join(', ') || 'none'}` : 'WebGLRenderingContext.getParameter()'
-		}">
-			<div>
-				${parameters.UNMASKED_VENDOR_WEBGL ? parameters.UNMASKED_VENDOR_WEBGL : ''}
-				${!parameters.UNMASKED_RENDERER_WEBGL ? HTMLNote.BLOCKED : `<br>${parameters.UNMASKED_RENDERER_WEBGL}`}
-			</div>
-		</div>
-		${!dataURI ? '<div class="gl-image"></div>' : `<image class="gl-image" src="${dataURI}"/>`}
-	</div>
-	`
 }

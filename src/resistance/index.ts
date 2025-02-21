@@ -1,8 +1,7 @@
 import { captureError } from '../errors'
 import { prototypeLies } from '../lies'
 import { hashMini } from '../utils/crypto'
-import { createTimer, queueEvent, IS_BLINK, IS_GECKO, braveBrowser, getBraveMode, logTestResult, performanceLogger, hashSlice } from '../utils/helpers'
-import { HTMLNote, modal } from '../utils/html'
+import { createTimer, queueEvent, IS_BLINK, IS_GECKO, braveBrowser, getBraveMode, logTestResult } from '../utils/helpers'
 
 export default async function getResistance() {
 	try {
@@ -481,78 +480,4 @@ export default async function getResistance() {
 		captureError(error)
 		return
 	}
-}
-
-export function resistanceHTML(fp) {
-	if (!fp.resistance) {
-		return `
-		<div class="col-six undefined">
-			<strong>Resistance</strong>
-			<div>privacy: ${HTMLNote.BLOCKED}</div>
-			<div>security: ${HTMLNote.BLOCKED}</div>
-			<div>mode: ${HTMLNote.BLOCKED}</div>
-			<div>extension: ${HTMLNote.BLOCKED}</div>
-		</div>`
-	}
-	const {
-		resistance: data,
-	} = fp
-	const {
-		$hash,
-		privacy,
-		security,
-		mode,
-		extension,
-		extensionHashPattern,
-		engine,
-	} = data || {}
-
-	const securitySettings = !security || Object.keys(security).reduce((acc, curr) => {
-		if (security[curr]) {
-			acc[curr] = 'enabled'
-			return acc
-		}
-		acc[curr] = 'disabled'
-		return acc
-	}, {})
-
-	const browserIcon = (
-		/brave/i.test(privacy) ? '<span class="icon brave"></span>' :
-			/tor/i.test(privacy) ? '<span class="icon tor"></span>' :
-				/firefox/i.test(privacy) ? '<span class="icon firefox"></span>' :
-					''
-	)
-
-	const extensionIcon = (
-		/blink/i.test(engine) ? '<span class="icon chrome-extension"></span>' :
-			/gecko/i.test(engine) ? '<span class="icon firefox-addon"></span>' :
-				''
-	)
-
-	return `
-	<div class="relative col-six">
-		<span class="aside-note">${performanceLogger.getLog().resistance}</span>
-		<strong>Resistance</strong><span class="hash">${hashSlice($hash)}</span>
-		<div>privacy: ${privacy ? `${browserIcon}${privacy}` : HTMLNote.UNKNOWN}</div>
-		<div>security: ${
-			!security ? HTMLNote.UNKNOWN :
-			modal(
-				'creep-resistance',
-				'<strong>Security</strong><br><br>'+
-				Object.keys(securitySettings).map((key) => `${key}: ${''+securitySettings[key]}`).join('<br>'),
-				hashMini(security),
-			)
-		}</div>
-		<div>mode: ${mode || HTMLNote.UNKNOWN }</div>
-		<div>extension: ${
-			!Object.keys(extensionHashPattern || {}).length ? HTMLNote.UNKNOWN :
-			modal(
-				'creep-extension',
-				'<strong>Pattern</strong><br><br>'+
-				Object.keys(extensionHashPattern).map((key) => `${key}: ${''+extensionHashPattern[key]}`).join('<br>'),
-				(extension ? `${extensionIcon}${extension}` : hashMini(extensionHashPattern)),
-			)
-		}</div>
-	</div>
-	`
 }

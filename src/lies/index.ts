@@ -1,8 +1,7 @@
 /* eslint-disable new-cap */
 /* eslint-disable no-unused-vars */
 import { captureError } from '../errors'
-import { IS_BLINK, IS_WEBKIT, IS_GECKO, hashSlice, IS_WORKER_SCOPE } from '../utils/helpers'
-import { modal } from '../utils/html'
+import { IS_BLINK, IS_WEBKIT, IS_GECKO, IS_WORKER_SCOPE } from '../utils/helpers'
 
 // warm up while we detect lies
 try {
@@ -186,7 +185,6 @@ function queryLies({
 		['failed class extends error']: !IS_WEBKIT && failsTypeError({
 			spawnErr: () => {
 				// @ts-expect-error
-				class Fake extends apiFunction { }
 			},
 		}),
 		['failed null conversion error']: failsTypeError({
@@ -922,32 +920,4 @@ const getLies = () => {
 	return { data: records, totalLies }
 }
 
-interface LiesFingerprint {
-	lies: {
-		data: Record<string, string[]>,
-		totalLies: number,
-		$hash: string
-	}
-}
-function liesHTML(fp: LiesFingerprint, pointsHTML: string): string {
-	const { lies: { data, totalLies, $hash } } = fp
-	return `
-	<div class="${totalLies ? ' lies' : ''}">lies (${!totalLies ? '0' : '' + totalLies}): ${
-		!totalLies ? 'none' : modal(
-			'creep-lies',
-			Object.keys(data).sort().map((key) => {
-				const lies = data[key]
-				return `
-					<br>
-					<div style="padding:5px">
-						<strong>${key}</strong>:
-						${lies.map((lie) => `<div>- ${lie}</div>`).join('')}
-					</div>
-					`
-			}).join(''),
-			hashSlice($hash),
-		)
-	}${pointsHTML}</div>`
-}
-
-export { getRandomValues, documentLie, createLieDetector, PHANTOM_DARKNESS, PARENT_PHANTOM, lieProps, prototypeLies, lieRecords, getLies, getPluginLies, liesHTML, PROTO_BENCHMARK }
+export { getRandomValues, documentLie, createLieDetector, PHANTOM_DARKNESS, PARENT_PHANTOM, lieProps, prototypeLies, getLies, getPluginLies };

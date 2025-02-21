@@ -1,6 +1,3 @@
-import { hashSlice } from '../utils/helpers'
-import { modal } from '../utils/html'
-
 const createErrorsCaptured = () => {
 	const errors = []
 	return {
@@ -95,19 +92,4 @@ const timer = (logStart) => {
 
 const getCapturedErrors = () => ({ data: errorsCaptured.getErrors() })
 
-const errorsHTML = (fp, pointsHTML) => {
-	const { capturedErrors: { data, $hash } } = fp
-	const len = data.length
-	return `
-	<div class="${len ? ' errors': ''}">errors (${!len ? '0' : ''+len}): ${
-		!len ? 'none' : modal(
-			'creep-captured-errors',
-			Object.keys(data)
-			.map((key, i) => `${i+1}: ${data[key].trustedName} - ${data[key].trustedMessage} `)
-			.join('<br>'),
-			hashSlice($hash),
-		)
-	}${pointsHTML}</div>`
-}
-
-export { captureError, attempt, caniuse, timer, errorsCaptured, getCapturedErrors, errorsHTML }
+export { captureError, attempt, caniuse, timer, getCapturedErrors };

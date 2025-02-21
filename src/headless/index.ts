@@ -1,10 +1,8 @@
 /* eslint-disable new-cap */
 import { captureError } from '../errors'
 import { lieProps, PARENT_PHANTOM } from '../lies'
-import { instanceId, hashMini } from '../utils/crypto'
-import { createTimer, queueEvent, IS_BLINK, logTestResult, performanceLogger, hashSlice } from '../utils/helpers'
-import { HTMLNote, modal } from '../utils/html'
-import { Platform } from './constants'
+import { instanceId } from '../utils/crypto'
+import { createTimer, queueEvent, IS_BLINK, logTestResult } from '../utils/helpers'
 import getPlatformEstimate from './getPlatformEstimate'
 import { getSystemFonts } from './getSystemFonts'
 
@@ -181,103 +179,4 @@ export default async function getHeadlessFeatures({
 		captureError(error)
 		return
 	}
-}
-
-export function headlessFeaturesHTML(fp) {
-	if (!fp.headless) {
-		return `
-		<div class="col-six">
-			<strong>Headless</strong>
-			<div>chromium: ${HTMLNote.BLOCKED}</div>
-			<div>0% like headless: ${HTMLNote.BLOCKED}</div>
-			<div>0% headless: ${HTMLNote.BLOCKED}</div>
-			<div>0% stealth: ${HTMLNote.BLOCKED}</div>
-			<div>platform hints:</div>
-			<div class="block-text">${HTMLNote.BLOCKED}</div>
-		</div>`
-	}
-	const {
-		headless: data,
-	} = fp
-	const {
-		$hash,
-		chromium,
-		likeHeadless,
-		likeHeadlessRating,
-		headless,
-		headlessRating,
-		stealth,
-		stealthRating,
-		systemFonts,
-		platformEstimate,
-	} = data || {}
-
-	const [scores, highestScore] = platformEstimate || []
-
-	const IconMap: Record<string, string> = {
-		[Platform.ANDROID]: `<span class="icon android"></span>`,
-		[Platform.CHROME_OS]: `<span class="icon cros"></span>`,
-		[Platform.WINDOWS]: `<span class="icon windows"></span>`,
-		[Platform.MAC]: `<span class="icon apple"></span>`,
-		[Platform.LINUX]: `<span class="icon linux"></span>`,
-	}
-
-	const scoreKeys = Object.keys(scores || {})
-	const platformTemplate = !scores ? '' : `
-		${scoreKeys.map((key) => (scores[key]*100).toFixed(0)).join(':')}
-		<br>${scoreKeys.map((key) => {
-			const score = scores[key]
-			const style = `
-				filter: opacity(${score == highestScore ? 100 : 15}%);
-			`
-			return `<span style="${style}">${IconMap[key]}</span>`
-		}).join('')}
-		`
-
-	return `
-	<div class="relative col-six">
-		<style>
-			.like-headless-rating {
-				background: linear-gradient(90deg, var(${likeHeadlessRating < 100 ? '--grey-glass' : '--error'}) ${likeHeadlessRating}%, #fff0 ${likeHeadlessRating}%, #fff0 100%);
-			}
-			.headless-rating {
-				background: linear-gradient(90deg, var(--error) ${headlessRating}%, #fff0 ${headlessRating}%, #fff0 100%);
-			}
-			.stealth-rating {
-				background: linear-gradient(90deg, var(--error) ${stealthRating}%, #fff0 ${stealthRating}%, #fff0 100%);
-			}
-		</style>
-		<span class="aside-note">${performanceLogger.getLog().headless}</span>
-		<strong>Headless</strong><span class="hash">${hashSlice($hash)}</span>
-		<div>chromium: ${''+chromium}</div>
-		<div class="like-headless-rating">${''+likeHeadlessRating}% like headless: ${
-			modal(
-				'creep-like-headless',
-				'<strong>Like Headless</strong><br><br>'+
-				Object.keys(likeHeadless).map((key) => `${key}: ${''+likeHeadless[key]}`).join('<br>'),
-				hashMini(likeHeadless),
-			)
-		}</div>
-		<div class="headless-rating">${''+headlessRating}% headless: ${
-			modal(
-				'creep-headless',
-				'<strong>Headless</strong><br><br>'+
-				Object.keys(headless).map((key) => `${key}: ${''+headless[key]}`).join('<br>'),
-				hashMini(headless),
-			)
-		}</div>
-		<div class="stealth-rating">${''+stealthRating}% stealth: ${
-			modal(
-				'creep-stealth',
-				'<strong>Stealth</strong><br><br>'+
-				Object.keys(stealth).map((key) => `${key}: ${''+stealth[key]}`).join('<br>'),
-				hashMini(stealth),
-			)
-		}</div>
-		<div>platform hints:</div>
-		<div class="block-text">
-			${systemFonts ? `<div>${systemFonts}</div>` : ''}
-			${platformTemplate ? `<div>${platformTemplate}</div>` : ''}
-		</div>
-	</div>`
 }

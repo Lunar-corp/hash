@@ -1,12 +1,8 @@
 import { captureError } from '../errors'
 import { lieProps, PHANTOM_DARKNESS, documentLie } from '../lies'
 import { instanceId, hashMini } from '../utils/crypto'
-import { createTimer, queueEvent, EMOJIS, CSS_FONT_FAMILY, IS_BLINK, IS_GECKO, logTestResult, performanceLogger, hashSlice, formatEmojiSet } from '../utils/helpers'
-import { patch, html, HTMLNote, getDiffs } from '../utils/html'
-
-function getRectSum(rect: Record<string, number>): number {
-	return Object.keys(rect).reduce((acc, key) => acc += rect[key], 0)/100_000_000
-}
+import { createTimer, queueEvent, EMOJIS, CSS_FONT_FAMILY, IS_BLINK, IS_GECKO, logTestResult } from '../utils/helpers'
+import { patch, html } from '../utils/html'
 
 // inspired by
 // https://privacycheck.sec.lrz.de/active/fp_gcr/fp_getclientrects.html
@@ -353,72 +349,3 @@ export default async function getClientRects() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function clientRectsHTML(fp: any) {
-	if (!fp.clientRects) {
-		return `
-		<div class="col-six undefined">
-			<strong>DOMRect</strong>
-			<div>elems A: ${HTMLNote.BLOCKED}</div>
-			<div>elems B: ${HTMLNote.BLOCKED}</div>
-			<div>range A: ${HTMLNote.BLOCKED}</div>
-			<div>range B: ${HTMLNote.BLOCKED}</div>
-			<div class="block-text">${HTMLNote.BLOCKED}</div>
-		</div>`
-	}
-	const {
-		clientRects: {
-			$hash,
-			elementClientRects,
-			elementBoundingClientRect,
-			rangeClientRects,
-			rangeBoundingClientRect,
-			emojiSet,
-			domrectSystemSum,
-			lied,
-		},
-	} = fp
-
-	const computeDiffs = (rects: Record<string, number>[]) => {
-		if (!rects || !rects.length) {
-			return
-		}
-		const expectedSum = rects.reduce((acc, rect) => {
-			const { right, left, width, bottom, top, height } = rect
-			const expected = {
-				width: right - left,
-				height: bottom - top,
-				right: left + width,
-				left: right - width,
-				bottom: top + height,
-				top: bottom - height,
-				x: right - width,
-				y: bottom - height,
-			}
-			return acc += getRectSum(expected)
-		}, 0)
-		const actualSum = rects.reduce((acc, rect) => acc += getRectSum(rect), 0)
-		return getDiffs({
-			stringA: actualSum,
-			stringB: expectedSum,
-			charDiff: true,
-			decorate: (diff) => `<span class="bold-fail">${diff}</span>`,
-		})
-	}
-
-	const helpTitle = `Element.getClientRects()\nhash: ${hashMini(emojiSet)}\n${emojiSet.map((x: string, i: number) => i && (i % 6 == 0) ? `${x}\n` : x).join('')}`
-
-	return `
-	<div class="relative col-six${lied ? ' rejected' : ''}">
-		<span class="aside-note">${performanceLogger.getLog().rects}</span>
-		<strong>DOMRect</strong><span class="${lied ? 'lies ' : ''}hash">${hashSlice($hash)}</span>
-		<div class="help" title="Element.getClientRects()">elems A: ${computeDiffs(elementClientRects)}</div>
-		<div class="help" title="Element.getBoundingClientRect()">elems B: ${computeDiffs(elementBoundingClientRect)}</div>
-		<div class="help" title="Range.getClientRects()">range A: ${computeDiffs(rangeClientRects)}</div>
-		<div class="help" title="Range.getBoundingClientRect()">range B: ${computeDiffs(rangeBoundingClientRect)}</div>
-		<div class="block-text help relative" title="${helpTitle}">
-			<span>${domrectSystemSum || HTMLNote.UNSUPPORTED}</span>
-			<span class="grey jumbo" style="font-family: ${CSS_FONT_FAMILY}">${formatEmojiSet(emojiSet)}</span>
-		</div>
-	</div>
-	`
-}

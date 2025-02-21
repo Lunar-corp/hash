@@ -1,8 +1,6 @@
 import { captureError } from '../errors'
 import { PARENT_PHANTOM } from '../lies'
-import { hashMini } from '../utils/crypto'
-import { createTimer, logTestResult, performanceLogger, hashSlice } from '../utils/helpers'
-import { HTMLNote, count, modal } from '../utils/html'
+import { createTimer, logTestResult } from '../utils/helpers'
 
 export default function getCSS() {
 	const computeStyle = (type, { require: [captureError] }) => {
@@ -189,79 +187,4 @@ export default function getCSS() {
 		captureError(error)
 		return
 	}
-}
-
-export function cssHTML(fp) {
-	if (!fp.css) {
-		return `
-		<div class="col-six undefined">
-			<strong>Computed Style</strong>
-			<div>keys (0): ${HTMLNote.BLOCKED}</div>
-			<div>system styles: ${HTMLNote.BLOCKED}</div>
-			<div>
-				<div>${HTMLNote.BLOCKED}</div>
-			</div>
-			<div class="gradient"></div>
-		</div>`
-	}
-	const {
-		css: data,
-	} = fp
-	const {
-		$hash,
-		computedStyle,
-		system,
-	} = data
-
-	const colorsLen = system.colors.length
-	const gradientColors = system.colors.map((color, index) => {
-		const name = Object.values(color)[0]
-		return (
-			index == 0 ? `${name}, ${name} ${((index+1)/colorsLen*100).toFixed(2)}%` :
-			index == colorsLen-1 ? `${name} ${((index-1)/colorsLen*100).toFixed(2)}%, ${name} 100%` :
-			`${name} ${(index/colorsLen*100).toFixed(2)}%, ${name} ${((index+1)/colorsLen*100).toFixed(2)}%`
-		)
-	})
-	const id = 'creep-css-style-declaration-version'
-	return `
-	<div class="relative col-six">
-		<span class="aside-note">${performanceLogger.getLog()['computed style']}</span>
-		<strong>Computed Style</strong><span class="hash">${hashSlice($hash)}</span>
-		<div>keys (${!computedStyle ? '0' : count(computedStyle.keys)}): ${
-			!computedStyle ? HTMLNote.BLOCKED :
-			modal(
-				'creep-computed-style',
-				computedStyle.keys.join(', '),
-				hashMini(computedStyle),
-			)
-		}</div>
-		<div>system styles: ${
-			system && system.colors ? modal(
-				`${id}-system-styles`,
-				[
-					...system.colors.map((color) => {
-						const key = Object.keys(color)[0]
-						const val = color[key]
-						return `
-							<div><span style="display:inline-block;border:1px solid #eee;border-radius:3px;width:12px;height:12px;background:${val}"></span> ${key}: ${val}</div>
-						`
-					}),
-					...system.fonts.map((font) => {
-						const key = Object.keys(font)[0]
-						const val = font[key]
-						return `
-							<div>${key}: <span style="padding:0 5px;border-radius:3px;font:${val}">${val}</span></div>
-						`
-					}),
-				].join(''),
-				hashMini(system),
-			) : HTMLNote.BLOCKED
-		}</div>
-		<div class="blurred" id="system-style-samples">
-			<div>system</div>
-		</div>
-		<style>.gradient { background: repeating-linear-gradient(to right, ${gradientColors.join(', ')}); }</style>
-		<div class="gradient"></div>
-	</div>
-	`
 }

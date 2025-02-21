@@ -1,6 +1,3 @@
-import { hashSlice } from '../utils/helpers'
-import { modal } from '../utils/html'
-
 // Detect proxy behavior
 const proxyBehavior = (x) => typeof x == 'function' ? true : false
 
@@ -68,11 +65,6 @@ const gibberish = (str: string, {strict = false} = {}): string[] => {
 }
 
 // validate
-const isInt = (x) => typeof x == 'number' && x % 1 == 0
-const trustInteger = (name, val) => {
-	const trusted = isInt(val)
-	return trusted ? val : sendToTrash(name, val)
-}
 
 // WebGL Renderer helpers
 function compressWebGLRenderer(x: string): string | undefined {
@@ -154,11 +146,6 @@ const getWebGLRendererParts = (x) => {
     ]
     const parts = [...knownParts].filter((name) => (''+x).includes(name))
     return [...new Set(parts)].sort().join(', ')
-}
-
-const hardenWebGLRenderer = (x) => {
-	const gpuHasKnownParts = getWebGLRendererParts(x).length
-	return gpuHasKnownParts ? compressWebGLRenderer(x) : x
 }
 
 const getWebGLRendererConfidence = (x) => {
@@ -247,17 +234,4 @@ const trashBin = createTrashBin()
 const { sendToTrash } = trashBin
 const getTrash = () => ({ trashBin: trashBin.getBin() })
 
-function trashHTML(fp, pointsHTML) {
-	const { trash: { trashBin, $hash } } = fp
-	const trashLen = trashBin.length
-	return `
-		<div class="${trashLen ? ' trash': ''}">trash (${!trashLen ? '0' : ''+trashLen }):${
-			!trashLen ? ' none' : modal(
-				'creep-trash',
-				trashBin.map((trash, i) => `${i+1}: ${trash.name}: ${trash.value}`).join('<br>'),
-				hashSlice($hash),
-			)
-		}${pointsHTML}</div>`
-}
-
-export { sendToTrash, proxyBehavior, gibberish, trustInteger, compressWebGLRenderer, getWebGLRendererParts, hardenWebGLRenderer, getWebGLRendererConfidence, trashBin, getTrash, trashHTML }
+export { sendToTrash, gibberish, compressWebGLRenderer, getWebGLRendererConfidence, getTrash };

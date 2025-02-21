@@ -1,9 +1,8 @@
 import { captureError } from '../errors'
 import { PHANTOM_DARKNESS, lieProps, getRandomValues } from '../lies'
 import { sendToTrash } from '../trash'
-import { hashMini } from '../utils/crypto'
-import { CSS_FONT_FAMILY, createTimer, queueEvent, EMOJIS, logTestResult, performanceLogger, hashSlice, formatEmojiSet, USER_AGENT_OS, LowerEntropy, Analysis } from '../utils/helpers'
-import { patch, html, HTMLNote, count } from '../utils/html'
+import { CSS_FONT_FAMILY, createTimer, queueEvent, EMOJIS, logTestResult, USER_AGENT_OS, LowerEntropy, Analysis } from '../utils/helpers'
+import { patch, html } from '../utils/html'
 import { PlatformClassifier } from '../utils/types'
 
 export function isFontOSBad(userAgentOS: string, fonts: string[]): boolean {
@@ -396,66 +395,4 @@ export default async function getFonts() {
 		captureError(error)
 		return
 	}
-}
-
-export function fontsHTML(fp) {
-	if (!fp.fonts) {
-		return `
-		<div class="col-six undefined">
-			<strong>Fonts</strong>
-			<div>load (0):</div>
-			<div>apps:${HTMLNote.BLOCKED}</div>
-			<div class="block-text-large">${HTMLNote.BLOCKED}</div>
-			<div class="block-text">${HTMLNote.BLOCKED}</div>
-		</div>`
-	}
-	const {
-		fonts: {
-			$hash,
-			fontFaceLoadFonts,
-			platformVersion,
-			apps,
-			emojiSet,
-			pixelSizeSystemSum,
-			lied,
-		},
-	} = fp
-
-	const icon = {
-		'Linux': '<span class="icon linux"></span>',
-		'Apple': '<span class="icon apple"></span>',
-		'Windows': '<span class="icon windows"></span>',
-		'Android': '<span class="icon android"></span>',
-		'CrOS': '<span class="icon cros"></span>',
-	}
-
-	const blockHelpTitle = `FontFace.load()\nCSSStyleDeclaration.setProperty()\nblock-size\ninline-size\nhash: ${hashMini(emojiSet)}\n${(emojiSet||[]).map((x, i) => i && (i % 6 == 0) ? `${x}\n` : x).join('')}`
-	return `
-	<div class="relative col-six${lied ? ' rejected' : ''}">
-		<span class="aside-note">${performanceLogger.getLog().fonts}</span>
-		<strong>Fonts</strong><span class="${lied ? 'lies ' : LowerEntropy.FONTS ? 'bold-fail ' : ''}hash">${hashSlice($hash)}</span>
-		<div class="help" title="FontFace.load()">load (${fontFaceLoadFonts ? count(fontFaceLoadFonts) : '0'}/${'' + FONT_LIST.length}): ${`Like ${platformVersion}` || ((fonts) => {
-			return !(fonts || []).length ? '' : (
-				((''+fonts).match(/Lucida Console/)||[]).length ? `${icon.Windows}Like Windows` :
-				((''+fonts).match(/Droid Sans Mono|Noto Color Emoji|Roboto/g)||[]).length == 3 ? `${icon.Linux}${icon.Android}Like Linux Android` :
-				((''+fonts).match(/Droid Sans Mono|Roboto/g)||[]).length == 2 ? `${icon.Android}Like Android` :
-				((''+fonts).match(/Noto Color Emoji|Roboto/g)||[]).length == 2 ? `${icon.CrOS}Like Chrome OS` :
-				((''+fonts).match(/Noto Color Emoji/)||[]).length ? `${icon.Linux}Like Linux` :
-				((''+fonts).match(/Arimo/)||[]).length ? `${icon.Linux}Like Linux` :
-				((''+fonts).match(/Helvetica Neue/g)||[]).length == 2 ? `${icon.Apple}Like Apple` :
-				`${(fonts||[])[0]}...`
-			)
-		})(fontFaceLoadFonts)}</div>
-		<div>apps: ${(apps || []).length ? apps.join(', ') : HTMLNote.UNSUPPORTED}</div>
-		<div class="block-text-large help relative" title="FontFace.load()\nFontFaceSet.check()">
-			${fontFaceLoadFonts.join(', ') || HTMLNote.UNSUPPORTED}
-		</div>
-		<div class="block-text help relative" title="${blockHelpTitle}">
-			<div>
-				<br><span>${pixelSizeSystemSum || HTMLNote.UNSUPPORTED}</span>
-				<br><span class="grey jumbo" style="font-family: ${CSS_FONT_FAMILY}">${formatEmojiSet(emojiSet)}</span>
-			</div>
-		</div>
-	</div>
-	`
 }

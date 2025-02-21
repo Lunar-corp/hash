@@ -1,7 +1,6 @@
 import { caniuse, captureError } from '../errors'
 import { lieProps } from '../lies'
-import { createTimer, queueEvent, logTestResult, performanceLogger, hashSlice, LowerEntropy } from '../utils/helpers'
-import { HTMLNote } from '../utils/html'
+import { createTimer, queueEvent, logTestResult } from '../utils/helpers'
 
 export default async function getIntl() {
 	const getLocale = (intl) => {
@@ -102,49 +101,4 @@ export default async function getIntl() {
 		captureError(error)
 		return
 	}
-}
-
-export function intlHTML(fp) {
-	if (!fp.htmlElementVersion) {
-		return `
-		<div class="col-six undefined">
-			<strong>Intl</strong>
-			<div>locale: ${HTMLNote.Blocked}</div>
-			<div>date: ${HTMLNote.Blocked}</div>
-			<div>display: ${HTMLNote.Blocked}</div>
-			<div>list: ${HTMLNote.Blocked}</div>
-			<div>number: ${HTMLNote.Blocked}</div>
-			<div>plural: ${HTMLNote.Blocked}</div>
-			<div>relative: ${HTMLNote.Blocked}</div>
-		</div>`
-	}
-	const {
-		$hash,
-		dateTimeFormat,
-		displayNames,
-		listFormat,
-		numberFormat,
-		pluralRules,
-		relativeTimeFormat,
-		locale,
-		lied,
-	} = fp.intl || {}
-
-	return `
-	<div class="relative col-six${lied ? ' rejected' : ''}">
-		<span class="aside-note">${performanceLogger.getLog().intl}</span>
-		<strong>Intl</strong><span class="${lied ? 'lies ' : LowerEntropy.TIME_ZONE ? 'bold-fail ' : ''}hash">${hashSlice($hash)}</span>
-		<div class="block-text help"  title="Intl.Collator\nIntl.DateTimeFormat\nIntl.DisplayNames\nIntl.ListFormat\nIntl.NumberFormat\nIntl.PluralRules\nIntl.RelativeTimeFormat">
-			${[
-				locale,
-				dateTimeFormat,
-				displayNames,
-				numberFormat,
-				relativeTimeFormat,
-				listFormat,
-				pluralRules,
-			].join('<br>')}
-		</div>
-	</div>
-	`
 }

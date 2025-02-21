@@ -1,8 +1,6 @@
 import { captureError } from '../errors'
 import { PHANTOM_DARKNESS } from '../lies'
-import { hashMini } from '../utils/crypto'
-import { createTimer, logTestResult, performanceLogger, hashSlice, LowerEntropy } from '../utils/helpers'
-import { HTMLNote, modal } from '../utils/html'
+import { createTimer, logTestResult, LowerEntropy } from '../utils/helpers'
 
 export default function getCSSMedia() {
 	const gcd = (a, b) => b == 0 ? a : gcd(b, a % b)
@@ -183,56 +181,4 @@ export default function getCSSMedia() {
 		captureError(error)
 		return
 	}
-}
-
-
-export function cssMediaHTML(fp) {
-	if (!fp.css) {
-		return `
-		<div class="col-six undefined">
-			<strong>CSS Media Queries</strong>
-			<div>@media: ${HTMLNote.BLOCKED}</div>
-			<div>matchMedia: ${HTMLNote.BLOCKED}</div>
-			<div>touch device: ${HTMLNote.BLOCKED}</div>
-			<div>screen query: ${HTMLNote.BLOCKED}</div>
-		</div>`
-	}
-	const {
-		cssMedia: data,
-	} = fp
-	const {
-		$hash,
-		mediaCSS,
-		matchMediaCSS,
-		screenQuery,
-	} = data
-
-	return `
-	<div class="relative col-six">
-		<span class="aside-note">${performanceLogger.getLog()['css media']}</span>
-		<strong>CSS Media Queries</strong><span class="hash">${hashSlice($hash)}</span>
-		<div>@media: ${
-			!mediaCSS || !Object.keys(mediaCSS).filter((key) => !!mediaCSS[key]).length ?
-			HTMLNote.BLOCKED :
-			modal(
-				'creep-css-media',
-				`<strong>@media</strong><br><br>${Object.keys(mediaCSS).map((key) => `${key}: ${mediaCSS[key] || HTMLNote.UNSUPPORTED}`).join('<br>')}`,
-				hashMini(mediaCSS),
-			)
-		}</div>
-		<div>matchMedia: ${
-			!matchMediaCSS || !Object.keys(matchMediaCSS).filter((key) => !!matchMediaCSS[key]).length ?
-			HTMLNote.BLOCKED :
-			modal(
-				'creep-css-match-media',
-				`<strong>matchMedia</strong><br><br>${Object.keys(matchMediaCSS).map((key) => `${key}: ${matchMediaCSS[key] || HTMLNote.UNSUPPORTED}`).join('<br>')}`,
-				hashMini(matchMediaCSS),
-			)
-		}</div>
-		<div>touch device: ${!mediaCSS ? HTMLNote.BLOCKED : mediaCSS['any-pointer'] == 'coarse' ? true : HTMLNote.UNKNOWN}</div>
-		<div>screen query: <span class="${(LowerEntropy.SCREEN || LowerEntropy.IFRAME_SCREEN) ? 'bold-fail ' : ''}">
-			${!screenQuery ? HTMLNote.BLOCKED : `${screenQuery.width} x ${screenQuery.height}`}
-		</span></div>
-	</div>
-	`
 }

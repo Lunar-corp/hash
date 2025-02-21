@@ -1,6 +1,5 @@
 import { captureError } from '../errors';
-import { createTimer, logTestResult, performanceLogger, hashSlice } from '../utils/helpers';
-import { HTMLNote, modal } from '../utils/html';
+import { createTimer, logTestResult } from '../utils/helpers';
 
 function getErrors(errFns) {
 	const errors = []
@@ -38,38 +37,4 @@ export default function getConsoleErrors() {
 		captureError(error)
 		return
 	}
-}
-
-export function consoleErrorsHTML(fp) {
-	if (!fp.consoleErrors) {
-		return `
-		<div class="col-six undefined">
-			<strong>Error</strong>
-			<div>results: ${HTMLNote.BLOCKED}</div>
-			<div>
-				<div>${HTMLNote.BLOCKED}</div>
-			</div>
-		</div>`
-	}
-	const {
-		consoleErrors: {
-			$hash,
-			errors,
-		},
-	} = fp
-
-	const results = Object.keys(errors).map((key) => {
-		const value = errors[key]
-		return `${+key+1}: ${value}`
-	})
-	return `
-	<div class="relative col-six">
-		<span class="aside-note">${performanceLogger.getLog()['console errors']}</span>
-		<strong>Error</strong><span class="hash">${hashSlice($hash)}</span>
-		<div>results: ${modal('creep-console-errors', results.join('<br>'))}</div>
-		<div class="blurred" id="error-samples">
-			<div>0% of engine</div>
-		</div>
-	</div>
-	`
 }

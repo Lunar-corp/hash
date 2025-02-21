@@ -1,8 +1,7 @@
 import { captureError } from '../errors'
 import { documentLie, lieProps, PHANTOM_DARKNESS } from '../lies'
-import { hashMini } from '../utils/crypto'
-import { createTimer, queueEvent, CSS_FONT_FAMILY, EMOJIS, logTestResult, performanceLogger, hashSlice, formatEmojiSet } from '../utils/helpers'
-import { patch, html, HTMLNote } from '../utils/html'
+import { createTimer, queueEvent, CSS_FONT_FAMILY, EMOJIS, logTestResult } from '../utils/helpers'
+import { patch, html } from '../utils/html'
 
 export default async function getSVG() {
 	try {
@@ -136,46 +135,4 @@ export default async function getSVG() {
 		captureError(error)
 		return
 	}
-}
-
-export function svgHTML(fp) {
-	if (!fp.svg) {
-		return `
-		<div class="col-six undefined">
-			<strong>SVGRect</strong>
-			<div>bBox: ${HTMLNote.BLOCKED}</div>
-			<div>char: ${HTMLNote.BLOCKED}</div>
-			<div>subs: ${HTMLNote.BLOCKED}</div>
-			<div>text: ${HTMLNote.BLOCKED}</div>
-			<div class="block-text">${HTMLNote.BLOCKED}</div>
-		</div>`
-	}
-	const {
-		svg: {
-			$hash,
-			bBox,
-			subStringLength,
-			extentOfChar,
-			computedTextLength,
-			emojiSet,
-			svgrectSystemSum,
-			lied,
-		},
-	} = fp
-	const divisor = 10000
-	const helpTitle = `SVGTextContentElement.getComputedTextLength()\nhash: ${hashMini(emojiSet)}\n${emojiSet.map((x, i) => i && (i % 6 == 0) ? `${x}\n` : x).join('')}`
-	return `
-	<div class="relative col-six${lied ? ' rejected' : ''}">
-		<span class="aside-note">${performanceLogger.getLog().svg}</span>
-		<strong>SVGRect</strong><span class="${lied ? 'lies ' : ''}hash">${hashSlice($hash)}</span>
-		<div class="help" title="SVGGraphicsElement.getBBox()">bBox: ${bBox ? (bBox/divisor) : HTMLNote.BLOCKED}</div>
-		<div class="help" title="SVGTextContentElement.getExtentOfChar()">char: ${extentOfChar ? (extentOfChar/divisor) : HTMLNote.BLOCKED}</div>
-		<div class="help" title="SVGTextContentElement.getSubStringLength()">subs: ${subStringLength ? (subStringLength/divisor) : HTMLNote.BLOCKED}</div>
-		<div class="help" title="SVGTextContentElement.getComputedTextLength()">text: ${computedTextLength ? (computedTextLength/divisor) : HTMLNote.BLOCKED}</div>
-		<div class="block-text help relative" title="${helpTitle}">
-			<span>${svgrectSystemSum || HTMLNote.UNSUPPORTED}</span>
-			<span class="grey jumbo" style="font-family: ${CSS_FONT_FAMILY}">${formatEmojiSet(emojiSet)}</span>
-		</div>
-	</div>
-	`
 }
